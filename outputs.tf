@@ -1,0 +1,258 @@
+# Outputs for Terraform AWS EKS Enterprise module
+
+# Cluster Information
+output "cluster_id" {
+  description = "The ID of the EKS cluster"
+  value       = module.eks.cluster_id
+}
+
+output "cluster_arn" {
+  description = "The Amazon Resource Name (ARN) of the cluster"
+  value       = module.eks.cluster_arn
+}
+
+output "cluster_name" {
+  description = "The name of the EKS cluster"
+  value       = module.eks.cluster_name
+}
+
+output "cluster_endpoint" {
+  description = "Endpoint for EKS control plane"
+  value       = module.eks.cluster_endpoint
+}
+
+output "cluster_version" {
+  description = "The Kubernetes version for the EKS cluster"
+  value       = module.eks.cluster_version
+}
+
+output "cluster_platform_version" {
+  description = "Platform version for the EKS cluster"
+  value       = module.eks.cluster_platform_version
+}
+
+output "cluster_status" {
+  description = "Status of the EKS cluster"
+  value       = module.eks.cluster_status
+}
+
+output "cluster_certificate_authority_data" {
+  description = "Base64 encoded certificate data required to communicate with the cluster"
+  value       = module.eks.cluster_certificate_authority_data
+}
+
+output "cluster_security_group_id" {
+  description = "Cluster security group that was created by Amazon EKS for the cluster"
+  value       = module.eks.cluster_security_group_id
+}
+
+output "cluster_security_group_arn" {
+  description = "Amazon Resource Name (ARN) of the cluster security group"
+  value       = module.eks.cluster_security_group_arn
+}
+
+# OIDC Provider
+output "cluster_oidc_issuer_url" {
+  description = "The URL on the EKS cluster for the OpenID Connect identity provider"
+  value       = module.eks.cluster_oidc_issuer_url
+}
+
+output "oidc_provider_arn" {
+  description = "The ARN of the OIDC Provider if enabled"
+  value       = module.eks.oidc_provider_arn
+}
+
+# Node Groups
+output "node_groups" {
+  description = "Map of attribute maps for all EKS managed node groups created"
+  value       = module.eks.node_groups
+  sensitive   = true
+}
+
+output "node_group_arns" {
+  description = "List of the EKS managed node group ARNs"
+  value       = module.eks.node_group_arns
+}
+
+output "node_group_status" {
+  description = "Status of the EKS managed node groups"
+  value       = module.eks.node_group_status
+}
+
+# Fargate Profiles
+output "fargate_profiles" {
+  description = "Map of attribute maps for all EKS Fargate Profiles created"
+  value       = module.eks.fargate_profiles
+}
+
+# Add-ons
+output "cluster_addons" {
+  description = "Map of attribute maps for all EKS cluster addons enabled"
+  value       = module.eks.cluster_addons
+}
+
+# VPC Information
+output "vpc_id" {
+  description = "ID of the VPC where the cluster and its nodes will be provisioned"
+  value       = module.vpc.vpc_id
+}
+
+output "vpc_cidr_block" {
+  description = "The CIDR block of the VPC"
+  value       = module.vpc.vpc_cidr_block
+}
+
+output "vpc_arn" {
+  description = "The ARN of the VPC"
+  value       = module.vpc.vpc_arn
+}
+
+output "private_subnets" {
+  description = "List of IDs of private subnets"
+  value       = module.vpc.private_subnets
+}
+
+output "public_subnets" {
+  description = "List of IDs of public subnets"
+  value       = module.vpc.public_subnets
+}
+
+output "private_subnet_arns" {
+  description = "List of ARNs of private subnets"
+  value       = module.vpc.private_subnet_arns
+}
+
+output "public_subnet_arns" {
+  description = "List of ARNs of public subnets"
+  value       = module.vpc.public_subnet_arns
+}
+
+output "nat_gateway_ids" {
+  description = "List of IDs of the NAT Gateways"
+  value       = module.vpc.natgw_ids
+}
+
+output "internet_gateway_id" {
+  description = "The ID of the Internet Gateway"
+  value       = module.vpc.igw_id
+}
+
+output "internet_gateway_arn" {
+  description = "The ARN of the Internet Gateway"
+  value       = module.vpc.igw_arn
+}
+
+# Security Information
+output "cluster_service_role_arn" {
+  description = "ARN of the EKS cluster service role"
+  value       = module.security.cluster_service_role_arn
+}
+
+output "node_group_role_arn" {
+  description = "ARN of the EKS node group role"
+  value       = module.security.node_group_role_arn
+}
+
+output "kms_key_id" {
+  description = "The globally unique identifier for the KMS key"
+  value       = module.security.kms_key_id
+}
+
+output "kms_key_arn" {
+  description = "The Amazon Resource Name (ARN) of the KMS key"
+  value       = module.security.kms_key_arn
+}
+
+output "node_group_security_group_id" {
+  description = "ID of the node group security group"
+  value       = module.security.node_group_security_group_id
+}
+
+# Monitoring Information
+output "cloudwatch_log_group_name" {
+  description = "Name of the CloudWatch log group"
+  value       = module.monitoring.cloudwatch_log_group_name
+}
+
+output "cloudwatch_log_group_arn" {
+  description = "ARN of the CloudWatch log group"
+  value       = module.monitoring.cloudwatch_log_group_arn
+}
+
+# kubectl Configuration
+output "kubectl_config" {
+  description = "kubectl config as generated by the module"
+  value = templatefile("${path.module}/templates/kubeconfig.tpl", {
+    cluster_name                      = module.eks.cluster_name
+    cluster_endpoint                  = module.eks.cluster_endpoint
+    cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
+    aws_region                       = var.aws_region
+  })
+  sensitive = true
+}
+
+# Connection Information
+output "cluster_connect_info" {
+  description = "Information for connecting to the EKS cluster"
+  value = {
+    cluster_name = module.eks.cluster_name
+    region       = var.aws_region
+    endpoint     = module.eks.cluster_endpoint
+    
+    # kubectl command
+    kubectl_command = "aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}"
+    
+    # Verification commands
+    verify_commands = [
+      "kubectl cluster-info",
+      "kubectl get nodes",
+      "kubectl get pods -A"
+    ]
+  }
+}
+
+# Cost Information
+output "estimated_monthly_cost" {
+  description = "Estimated monthly cost breakdown (approximate)"
+  value = {
+    eks_cluster = "72.00 USD"  # $0.10 per hour
+    nat_gateways = "${var.enable_nat_gateway ? length(local.azs) * 32.40 : 0} USD"  # $0.045 per hour per NAT Gateway
+    note = "This is an estimate. Actual costs depend on usage, data transfer, and additional services."
+  }
+}
+
+# Security Compliance
+output "security_compliance" {
+  description = "Security compliance information"
+  value = {
+    encryption_at_rest = var.enable_cluster_encryption
+    private_endpoint   = var.cluster_endpoint_private_access
+    vpc_flow_logs     = var.enable_vpc_flow_logs
+    logging_enabled   = length(var.cluster_enabled_log_types) > 0
+    
+    compliance_frameworks = [
+      "SOC 2 Type II",
+      "PCI DSS",
+      "HIPAA",
+      "FedRAMP"
+    ]
+  }
+}
+
+# Deployment Information
+output "deployment_info" {
+  description = "Information about the deployment"
+  value = {
+    terraform_version = "~> 1.5.0"
+    aws_provider_version = "~> 5.0"
+    kubernetes_version = var.cluster_version
+    deployment_timestamp = timestamp()
+    
+    next_steps = [
+      "Configure kubectl: aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}",
+      "Verify cluster: kubectl cluster-info",
+      "Check nodes: kubectl get nodes",
+      "Deploy applications: kubectl apply -f your-app.yaml"
+    ]
+  }
+}
